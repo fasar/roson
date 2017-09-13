@@ -1,3 +1,5 @@
 rootProject.name = 'rs-root'
 
 include 'rs-core', 'rs-app'
+include 'rs-jsynexample'
+

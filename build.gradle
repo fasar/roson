@@ -15,6 +15,7 @@ buildscript {
 subprojects {    
 
     repositories {
+        maven { url "https://clojars.org/repo" }
         mavenCentral()
         maven { url "https://repo.spring.io/snapshot" }
         maven { url "https://repo.spring.io/milestone" }
@@ -29,12 +30,15 @@ subprojects {
     
     dependencyManagement {
         imports { mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}") }
+        dependencies {
+            dependency 'com.jsyn:jsyn:20170815'
+        }
     }
-    
+
     dependencies {
-        compile('org.springframework.boot:spring-boot-starter')
-        testCompile('org.springframework.boot:spring-boot-starter-test')
+        testCompile group: 'junit', name: 'junit', version: '4.12'
     }
+
 
 }
 
