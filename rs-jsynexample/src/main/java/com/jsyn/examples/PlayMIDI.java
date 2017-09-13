@@ -16,26 +16,16 @@
 
 package com.jsyn.examples;
 
-import java.io.IOException;
-
 import com.jsyn.JSyn;
 import com.jsyn.Synthesizer;
-import com.jsyn.devices.javasound.MidiDeviceTools;
 import com.jsyn.instruments.DualOscillatorSynthVoice;
-import com.jsyn.instruments.SubtractiveSynthVoice;
-import com.jsyn.midi.MessageParser;
 import com.jsyn.midi.MidiConstants;
 import com.jsyn.midi.MidiSynthesizer;
 import com.jsyn.unitgen.LineOut;
-import com.jsyn.unitgen.PowerOfTwo;
-import com.jsyn.unitgen.SineOscillator;
-import com.jsyn.unitgen.UnitOscillator;
-import com.jsyn.unitgen.UnitVoice;
 import com.jsyn.util.MultiChannelSynthesizer;
-import com.jsyn.util.VoiceAllocator;
 import com.jsyn.util.VoiceDescription;
-import com.softsynth.math.AudioMath;
-import com.softsynth.shared.time.TimeStamp;
+
+import java.io.IOException;
 
 /**
  * Send MIDI messages to JSyn based MIDI synthesizer.
