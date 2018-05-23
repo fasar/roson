@@ -3,6 +3,7 @@ package fr.fasar.roson.core.jsyn;
 import com.jsyn.ports.UnitOutputPort;
 import com.jsyn.unitgen.UnitGenerator;
 import com.jsyn.unitgen.UnitSource;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 public class LineBufferIn extends UnitGenerator implements UnitSource {
@@ -36,12 +37,18 @@ public class LineBufferIn extends UnitGenerator implements UnitSource {
         }
     }
 
-    public void registerOn(Flux<LineBufferEntity> flux) {
-        flux.subscribe(entity -> {
+    public Disposable registerOn(Flux<LineBufferEntity> flux) {
+        Disposable subscribe = flux.subscribe(entity -> {
             for (int j = 0; j < numParts; j++) {
                 buffers[j] = entity.inputs[j];
             }
+        }, throwable -> {
+            throwable.printStackTrace();
+            output.disconnectAll();
+        }, () -> {
+            output.disconnectAll();
         });
+        return subscribe;
     }
 
     @Override

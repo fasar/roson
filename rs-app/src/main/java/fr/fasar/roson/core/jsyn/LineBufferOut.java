@@ -6,6 +6,8 @@ import com.jsyn.unitgen.UnitSink;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 
+import java.util.Arrays;
+
 public class LineBufferOut extends UnitGenerator implements UnitSink {
     private DirectProcessor<LineBufferEntity> directProcessor;
     public UnitInputPort input;
@@ -23,7 +25,7 @@ public class LineBufferOut extends UnitGenerator implements UnitSink {
     public void generate(int start, int limit) {
         LineBufferEntity entity = new LineBufferEntity(numParts);
         for (int i = 0; i < numParts; i++) {
-            final double[] values = input.getValues(i);
+            final double[] values = Arrays.copyOfRange(input.getValues(i), start, start+limit);
             entity.setInput(i, values);
         }
         directProcessor.onNext(entity);

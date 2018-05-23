@@ -8,11 +8,20 @@ import com.jsyn.unitgen.LineOut;
 import fr.fasar.roson.core.jsyn.LineBufferEntity;
 import fr.fasar.roson.core.jsyn.LineBufferIn;
 import fr.fasar.roson.core.jsyn.LineBufferOut;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
+import java.util.concurrent.TimeUnit;
 
 public class ReadWriteWithReactor {
 
     public static void main(String[] args) throws InterruptedException {
+        System.out.println("Starting application");
+        System.out.println("" + 1+1);
+
         Synthesizer synth = JSyn.createSynthesizer();
         int numInputChannels = 2;
         int numOutputChannels = 2;
@@ -30,8 +39,6 @@ public class ReadWriteWithReactor {
 
         reactorOut.start();
 
-
-
         LineBufferIn reactorIn = new LineBufferIn(2);
         LineOut lineOut = new LineOut();
         synth.add(reactorIn);
@@ -42,13 +49,18 @@ public class ReadWriteWithReactor {
         lineOut.start();
 
         final Flux<LineBufferEntity> flux = reactorOut.getFlux();
-        reactorIn.registerOn(flux);
+        Flux<LineBufferEntity> cache = flux.delayElements(Duration.of(3, ChronoUnit.SECONDS));
         flux.subscribe(e -> {
             System.out.println("Receive something : " + e.getInput(0)[0]);
         });
 
-        Thread.sleep(1000);
+        Thread.sleep(3020);
+        Disposable disposable = reactorIn.registerOn(cache);
 
+        System.out.println("Wait for 20 seconds");
+        Thread.sleep(20000);
+        System.out.println("Kill the flux");
+        disposable.dispose();
     }
 
 }

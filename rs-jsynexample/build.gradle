@@ -1,4 +1,6 @@
 
 dependencies {
+    compile('org.springframework.boot:spring-boot-starter')
+    compile 'io.projectreactor:reactor-core'
     compile 'com.jsyn:jsyn'
 }
