@@ -1,4 +1,4 @@
-package fs.fasar.test;
+package fs.fasar.test.jsyn;
 
 import com.jsyn.JSyn;
 import com.jsyn.Synthesizer;
