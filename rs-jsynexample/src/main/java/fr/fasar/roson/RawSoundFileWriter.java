@@ -31,7 +31,7 @@ public class RawSoundFileWriter implements Consumer<Wrapper> {
         }
         if (cmdOutput) {
             byte[] buffer = new byte[wrapper.read];
-            System.arraycopy(wrapper.targetData, wrapper.bufferOffset, buffer, 0, wrapper.read);
+            System.arraycopy(wrapper.buffer, wrapper.bufferOffset, buffer, 0, wrapper.read);
             try {
                 Files.write(output, buffer, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
             } catch (IOException e) {

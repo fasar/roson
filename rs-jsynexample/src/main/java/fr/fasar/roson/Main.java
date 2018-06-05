@@ -11,6 +11,7 @@ import java.time.Instant;
 public class Main {
 
     private static final int NB_PAGES_BUFFER = 100;
+    private static final int BUFFER_TO_READ = 44100;
 
     static boolean run = true;
 
@@ -20,6 +21,7 @@ public class Main {
         DataLine.Info targetInfo = new DataLine.Info(TargetDataLine.class, format);
         DataLine.Info sourceInfo = new DataLine.Info(SourceDataLine.class, format);
         RawSoundFileWriter fileOutTask = new RawSoundFileWriter();
+        RawUdpWriter udpOutput = new RawUdpWriter();
 
         try {
             TargetDataLine targetLine = (TargetDataLine) AudioSystem.getLine(targetInfo);
@@ -30,7 +32,7 @@ public class Main {
             sourceLine.open(format);
             sourceLine.start();
 
-            int bufferToRead = 44100;
+            int bufferToRead = BUFFER_TO_READ;
             byte[] targetData = new byte[bufferToRead * NB_PAGES_BUFFER];
 
             // Task to read the sound
@@ -63,23 +65,15 @@ public class Main {
                     .publishOn(Schedulers.parallel())
                     .subscribe(fileOutTask);
 
+            // Output the sound to a file
+            objectFlux
+                    .publishOn(Schedulers.parallel())
+                    .subscribe(udpOutput);
+
             // Do the RMS.
             objectFlux
                     .publishOn(Schedulers.parallel())
-                    .subscribe(wrapper -> {
-                        Double rms = 0.0;
-                        int indexOffset = wrapper.bufferOffset;
-                        for (int i = 0; i < bufferToRead / 4; i++) {
-                            int i2 = indexOffset + i * 4;
-                            byte high = targetData[i2];
-                            byte low = targetData[i2 + 1];
-                            int num = (high << 8) + (low & 0xFF);
-                            rms += Math.pow(num, 2);
-                        }
-                        rms = rms / bufferToRead;
-                        System.out.println("RMS is : " + rms);
-
-                    });
+                    .subscribe(new SilenceDetector());
 
         } catch (Exception e) {
             System.err.println(e);
