@@ -5,17 +5,21 @@ import reactor.core.publisher.ReplayProcessor;
 import reactor.core.scheduler.Schedulers;
 
 import javax.sound.sampled.*;
+import java.io.IOException;
 import java.time.Instant;
 
 public class Main {
 
-    private static final int NB_BUFFER = 100;
+    private static final int NB_PAGES_BUFFER = 100;
 
-    public static void main(String[] args) throws InterruptedException {
+    static boolean run = true;
+
+    public static void main(String[] args) throws InterruptedException, IOException {
         AudioFormat format = MyFormat.get();
 
         DataLine.Info targetInfo = new DataLine.Info(TargetDataLine.class, format);
         DataLine.Info sourceInfo = new DataLine.Info(SourceDataLine.class, format);
+        RawSoundFileWriter fileOutTask = new RawSoundFileWriter();
 
         try {
             TargetDataLine targetLine = (TargetDataLine) AudioSystem.getLine(targetInfo);
@@ -27,39 +31,44 @@ public class Main {
             sourceLine.start();
 
             int bufferToRead = 44100;
-            byte[] targetData = new byte[bufferToRead * NB_BUFFER];
+            byte[] targetData = new byte[bufferToRead * NB_PAGES_BUFFER];
 
             // Task to read the sound
             ReplayProcessor<Wrapper> emitter = ReplayProcessor.create(1, false);
             Runnable taskRunnable = () -> {
-                int currentIndex = 0;
+                int pageBuffer = 0;
                 while (true) {
-                    currentIndex = currentIndex + 1;
-                    if (currentIndex % (NB_BUFFER) == 0) {
-                        currentIndex = 0;
+                    pageBuffer = pageBuffer + 1;
+                    if (pageBuffer % (NB_PAGES_BUFFER) == 0) {
+                        pageBuffer = 0;
                     }
-                    Instant start = Instant.now();
-                    int read = targetLine.read(targetData, currentIndex * bufferToRead, bufferToRead);
-                    emitter.onNext(new Wrapper(currentIndex, read, start));
+                    Instant startTs = Instant.now();
+                    int read = targetLine.read(targetData, pageBuffer * bufferToRead, bufferToRead);
+                    emitter.onNext(new Wrapper(targetData, pageBuffer * bufferToRead, pageBuffer, read, startTs));
                 }
             };
             Thread task = new Thread(taskRunnable);
-            task.run();
+            task.start();
             Flux<Wrapper> objectFlux = emitter;
 
             // Output the sound to the speakers
             objectFlux
                     .publishOn(Schedulers.parallel())
                     .subscribe(wrapper -> {
-                        sourceLine.write(targetData, wrapper.buffPos * bufferToRead, wrapper.read);
+                        sourceLine.write(targetData, wrapper.pageBuffer * bufferToRead, wrapper.read);
                     });
+
+            // Output the sound to a file
+            objectFlux
+                    .publishOn(Schedulers.parallel())
+                    .subscribe(fileOutTask);
 
             // Do the RMS.
             objectFlux
                     .publishOn(Schedulers.parallel())
                     .subscribe(wrapper -> {
                         Double rms = 0.0;
-                        int indexOffset = wrapper.buffPos * bufferToRead;
+                        int indexOffset = wrapper.bufferOffset;
                         for (int i = 0; i < bufferToRead / 4; i++) {
                             int i2 = indexOffset + i * 4;
                             byte high = targetData[i2];
@@ -76,7 +85,15 @@ public class Main {
             System.err.println(e);
         }
 
-        Thread.sleep(100_000);
+        boolean isStart = false;
+        while(run) {
+            System.in.read();
+            isStart = !isStart;
+            fileOutTask.startOutput(isStart);
+            while(System.in.available()>0) {
+                System.in.read();
+            }
+        }
     }
 
 
