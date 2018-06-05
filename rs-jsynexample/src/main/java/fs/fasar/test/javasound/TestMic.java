@@ -1,5 +1,7 @@
 package fs.fasar.test.javasound;
 
+import fr.fasar.roson.MyFormat;
+
 import javax.sound.sampled.*;
 
 public class TestMic {

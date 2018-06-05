@@ -1,4 +1,4 @@
-package fs.fasar.test.javasound;
+package fr.fasar.roson;
 
 import javax.sound.sampled.AudioFormat;
 
